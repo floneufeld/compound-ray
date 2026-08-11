@@ -58,6 +58,8 @@
 #include <dirent.h>
 #endif
 
+#include "support/tinygltf/stb_image_write.h"
+
 namespace sutil
 {
 
@@ -470,7 +472,22 @@ void displayBufferFile( const char* filename, const ImageBuffer& buffer, bool di
             break;
     }
 
-    SavePPM( &pix[0], filename, width, height, 3 );
+    std::string fn(filename);
+    if (fn.size() >= 4 &&
+        (fn.substr(fn.size() - 4) == ".jpg" ||
+        fn.substr(fn.size() - 5) == ".jpeg"))
+    {
+        stbi_write_jpg(fn.c_str(), width, height, 3, &pix[0], 95);
+    }
+    else if (fn.size() >= 4 &&
+            fn.substr(fn.size() - 4) == ".png")
+    {
+        stbi_write_png(fn.c_str(), width, height, 3, &pix[0], width * 3);
+    }
+    else
+    {
+        SavePPM(&pix[0], filename, width, height, 3);
+    }
 }
 
 
