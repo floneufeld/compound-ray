@@ -67,12 +67,12 @@ project(Eye-Renderer-Three)
 
 # This enforces a particular version of CMake that we require to process the script files
 # properly.
-cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5)
 
 # As of CMake 2.6 policies were introduced in order to provide a mechanism for
 # adding backwards compatibility one feature at a time.  We will just specify
 # that all policies will use version 2.6 symantics.
-cmake_policy(VERSION 3.0)
+cmake_policy(VERSION 3.5)
 
 if( POLICY CMP0072 )
   # FindOpenGL prefers GLVND by default when available
