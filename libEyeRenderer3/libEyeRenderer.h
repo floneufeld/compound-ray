@@ -72,6 +72,8 @@ extern "C"
     float3* normal);
   
   bool isKeyPressed(int key);
+
+  void processEvents();
 }
 
 void *getWindowPointer(); // This is a little janky, but it's probably okay, as we're avoiding a load of imports
