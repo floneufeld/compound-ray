@@ -82,8 +82,8 @@ MulticamScene scene;
 
 globalParameters::LaunchParams*  d_params = nullptr;
 globalParameters::LaunchParams   params   = {};
-int32_t                 width    = 400;
-int32_t                 height   = 400;
+int32_t                 width    = 2000;
+int32_t                 height   = 2000;
 
 GLFWwindow* window = sutil::initUI( "Eye Renderer 3.0", width, height );
 sutil::CUDAOutputBuffer<uchar4> outputBuffer(static_cast<sutil::CUDAOutputBufferType>(BUFFER_TYPE), width, height);
