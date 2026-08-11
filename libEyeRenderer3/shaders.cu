@@ -755,6 +755,16 @@ extern "C" __global__ void __miss__simple_sky()
     setPayloadResult( lower*(1.0f-mix) + upper*mix );
 }
 
+extern "C" __global__ void __miss__black_background()
+{
+    setPayloadResult(make_float3(0.0f, 0.0f, 0.0f));
+}
+
+extern "C" __global__ void __miss__white_background()
+{
+    setPayloadResult(make_float3(1.0f, 1.0f, 1.0f));
+}
+
 //extern "C" __global__ void __miss__sky_and_grass()
 //{
 //    const float3 dir = normalize(optixGetWorldRayDirection());
