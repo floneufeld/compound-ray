@@ -90,6 +90,7 @@ BufferView<T> bufferViewFromGLTF( const tinygltf::Model& model, MulticamScene& s
     const auto& gltf_buffer_view = model.bufferViews[ gltf_accessor.bufferView ];
 
     const int32_t elmt_byte_size =
+            gltf_accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE  ? 1 :
             gltf_accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? 2 :
             gltf_accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT   ? 4 :
             gltf_accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT          ? 4 :
