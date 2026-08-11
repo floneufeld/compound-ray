@@ -208,6 +208,30 @@ void cleanup()
 //------------------------------------------------------------------------------
 // General Running
 //------------------------------------------------------------------------------
+
+bool raycastGeometry(
+    float ox, float oy, float oz,
+    float dx, float dy, float dz,
+    float3* hit,
+    float3* normal)
+{
+
+    float3 origin = make_float3(ox, oy, oz);
+    float3 dir    = normalize(make_float3(dx, dy, dz));
+
+    float3 h, n;
+
+    bool ok = scene.raycast(origin, dir, h, n);
+
+    if(ok)
+    {
+        *hit = h;
+        *normal = n;
+    }
+
+    return ok;
+}
+
 void setVerbosity(bool v)
 {
   notificationsActive = v;

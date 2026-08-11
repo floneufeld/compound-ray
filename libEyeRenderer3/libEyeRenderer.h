@@ -64,6 +64,12 @@ extern "C"
   bool isInsideHitGeometry(float x, float y, float z, char* name); // tests whether a point is within a named piece of hit geometry
   float3 getGeometryMaxBounds(char* name); // Returns the maximal bounds of a geometry element, specified by name.
   float3 getGeometryMinBounds(char* name); // Returns the minimal bounds of a geometry element, specified by name.
+
+  bool raycastGeometry(
+    float ox, float oy, float oz,
+    float dx, float dy, float dz,
+    float3* hit,
+    float3* normal);
 }
 
 void *getWindowPointer(); // This is a little janky, but it's probably okay, as we're avoiding a load of imports

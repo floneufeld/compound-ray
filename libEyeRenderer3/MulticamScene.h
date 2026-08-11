@@ -187,6 +187,12 @@ class MulticamScene
     std::string                          m_backgroundShader         = "__miss__default_background";
 
     std::vector<sutil::hitscan::TriangleMesh>         m_hitboxMeshes; // Stores all triangle meshes public, because why the hell not?
+
+    bool raycast(
+      float3 origin,
+      float3 dir,
+      float3& outHit,
+      float3& outNormal);
   private:
     void createPTXModule();
     void createProgramGroups();

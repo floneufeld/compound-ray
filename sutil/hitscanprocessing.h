@@ -37,6 +37,13 @@ struct TriangleMesh{
   void print();
 };
 
+bool raycastMesh(
+    TriangleMesh& tm,
+    float3 rayStart,
+    float3 rayDir,
+    float3& hitPoint,
+    float3& hitNormal);
+
 // Performs hitscan stuff
 const bool isPointWithinMesh(TriangleMesh& tm, float3 worldPoint);
 const unsigned int countMeshRayIntersections(TriangleMesh& tm, float3 rayStart, float3 rayDir, float limit = 100000.0f, bool debug = false);

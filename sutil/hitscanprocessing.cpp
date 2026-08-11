@@ -13,6 +13,46 @@
 //#pragma warning( pop )
 //#endif
 
+bool sutil::hitscan::raycastMesh( TriangleMesh& tm, float3 rayStart, float3 rayDir, float3& hitPoint, float3& hitNormal)
+{
+  // Transform the ray into object space 
+  float3 objectRayStart = make_float3(tm.transform.inverse() * make_float4(rayStart, 1.0f));
+
+  float3 objectRayDir = normalize(make_float3(tm.transform.inverse() * make_float4(rayDir, 0.0f)));
+  bool foundHit = false; 
+  float closestDistance = 1e30f;
+
+  for (const Triangle& triangle : tm.triangles) 
+  { 
+    float3 planeNormal = normalize( cross(triangle.p1 - triangle.p0, triangle.p2 - triangle.p0));
+    float denominator = dot(planeNormal, objectRayDir);
+    if (fabs(denominator) < 1e-6f) continue; 
+    float t = dot(triangle.p0 - objectRayStart, planeNormal) / denominator;
+    if (t < 0.0f) continue;
+    float3 hit = objectRayStart + t * objectRayDir; 
+    // -------- inside-triangle test -------- 
+    float3 edge, vp;
+    edge = triangle.p1 - triangle.p0; vp = hit - triangle.p0; if (dot(planeNormal, cross(edge, vp)) < 0.0f) continue;
+    edge = triangle.p2 - triangle.p1; vp = hit - triangle.p1; if (dot(planeNormal, cross(edge, vp)) < 0.0f) continue;
+    edge = triangle.p0 - triangle.p2; vp = hit - triangle.p2; if (dot(planeNormal, cross(edge, vp)) < 0.0f) continue;
+    // ------------------------------------- 
+    if (t < closestDistance) 
+    { 
+      closestDistance = t; 
+      hitPoint = hit; 
+      hitNormal = planeNormal; 
+      foundHit = true; 
+    }
+  }
+
+  if (!foundHit) return false;
+  // Transform hit point back into world space 
+  hitPoint = make_float3(tm.transform * make_float4(hitPoint, 1.0f));
+  // Transform normal into world space
+  hitNormal = normalize(make_float3(tm.transform * make_float4(hitNormal, 0.0f)));
+  return true;
+}
+
 /////////////////////////////////////////////////////////////
 // Performing hitscans
 /////////////////////////////////////////////////////////////

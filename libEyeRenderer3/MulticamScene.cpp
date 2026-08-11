@@ -346,6 +346,15 @@ void processGLTFNode(
     else if( gltf_node.mesh != -1 )
     {
         const auto& gltf_mesh = model.meshes[ gltf_node.mesh ];
+
+        sutil::hitscan::TriangleMesh tm;
+        tm.name = gltf_mesh.name;
+        tm.transform = node_xform;
+        sutil::hitscan::populateTriangleMesh(tm, gltf_mesh, model);
+        sutil::hitscan::calculateObjectAabb(tm);
+        sutil::hitscan::calculateWorldAabbUsingTransformAndObjectAabb(tm);
+        scene.m_hitboxMeshes.push_back(tm);
+
         std::cerr << "Processing glTF mesh: '" << gltf_mesh.name << "'\n";
         std::cerr << "\tNum mesh primitive groups: " << gltf_mesh.primitives.size() << std::endl;
         for( auto& gltf_primitive : gltf_mesh.primitives )
@@ -895,6 +904,45 @@ void MulticamScene::cleanup()
 {
   //TODO: destroy the camera vector properly
   CompoundEye::FreeCompoundRecord();
+}
+
+bool MulticamScene::raycast(
+    float3 origin,
+    float3 dir,
+    float3& outHit,
+    float3& outNormal)
+{
+    bool found = false;
+    float closestT = 1e30f;
+
+    float3 bestHit, bestNormal;
+
+
+    for(auto& mesh : m_hitboxMeshes)
+    {
+        float3 hit, normal;
+
+        if (sutil::hitscan::raycastMesh(mesh, origin, dir, hit, normal))
+        {
+            float t = length(hit - origin);
+
+            if (t < closestT)
+            {
+                closestT = t;
+                bestHit = hit;
+                bestNormal = normal;
+                found = true;
+            }
+        }
+    }
+
+    if(found)
+    {
+        outHit = bestHit;
+        outNormal = bestNormal;
+    }
+
+    return found;
 }
 
 //------------------------------------------------------------------------------
