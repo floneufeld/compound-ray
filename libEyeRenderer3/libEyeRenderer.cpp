@@ -232,6 +232,8 @@ bool raycastGeometry(
     return ok;
 }
 
+bool isKeyPressed(int key) {return glfwGetKey(window, key) == GLFW_PRESS;}
+
 void setVerbosity(bool v)
 {
   notificationsActive = v;
