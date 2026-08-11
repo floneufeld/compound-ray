@@ -43,7 +43,7 @@
 #include "MulticamScene.h"
 
 #define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #if defined( WIN32 )
 #pragma warning( push )
@@ -569,6 +569,11 @@ void loadScene( const std::string& filename, MulticamScene& scene )
       if(bgShader != "")
       {
         scene.m_backgroundShader = "__miss__" + bgShader;
+      }
+
+      if(modelScene.extras.Has("background-hdri"))
+      {
+        scene.m_backgroundHdri = modelScene.extras.Get("background-hdri").Get<std::string>();
       }
     }
     std::cout << "Background shader set to: \"" << scene.m_backgroundShader << "\"" << std::endl;

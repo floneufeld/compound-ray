@@ -43,7 +43,7 @@
 #include "MulticamScene.h"
 
 #define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #if defined( WIN32 )
 #pragma warning( push )

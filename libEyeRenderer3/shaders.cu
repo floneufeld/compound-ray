@@ -765,6 +765,31 @@ extern "C" __global__ void __miss__white_background()
     setPayloadResult(make_float3(1.0f, 1.0f, 1.0f));
 }
 
+extern "C" __global__ void __miss__hdri()
+{
+    const float3 dir =
+        normalize(optixGetWorldRayDirection());
+
+    const float u =
+        (atan2f(dir.z, dir.x) + M_PIf)
+        * (0.5f / M_PIf);
+
+    const float v =
+    1.0f - (
+        (asinf(dir.y) + M_PIf * 0.5f)
+        / M_PIf
+    );
+
+    const float4 color =
+        tex2D<float4>(
+            params.hdriTexture,
+            u,
+            v
+        );
+
+    setPayloadResult(make_float3(color));
+}
+
 //extern "C" __global__ void __miss__sky_and_grass()
 //{
 //    const float3 dir = normalize(optixGetWorldRayDirection());

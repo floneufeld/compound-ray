@@ -35,6 +35,8 @@
 #include <cuda/Light.h>
 #include <cuda/MaterialData.h>
 
+#include <cuda_runtime.h>
+
 namespace globalParameters
 {
 
@@ -71,6 +73,8 @@ struct LaunchParams
     BufferView<Light::Point> lights;
     float3                   miss_color;
     OptixTraversableHandle   handle;
+
+    cudaTextureObject_t      hdriTexture;
 };
 
 

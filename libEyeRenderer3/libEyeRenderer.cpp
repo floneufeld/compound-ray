@@ -64,6 +64,10 @@
 #include <cstdint>
 #include <vector>
 
+#include "support/tinygltf/stb_image.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+
 //#define USE_IAS // WAR for broken direct intersection of GAS on non-RTX cards
 #ifdef BUFFER_TYPE_CUDA_DEVICE
   #define BUFFER_TYPE 0
@@ -90,6 +94,73 @@ sutil::CUDAOutputBuffer<uchar4> outputBuffer(static_cast<sutil::CUDAOutputBuffer
 sutil::GLDisplay gl_display; // Stores the frame buffer to swap in and out
 
 bool notificationsActive = true;
+
+cudaTextureObject_t loadHDRI(const char* path)
+{
+    int w, h, comp;
+
+    float* pixels =
+        stbi_loadf(path, &w, &h, &comp, 4);
+
+    cudaChannelFormatDesc channelDesc =
+        cudaCreateChannelDesc<float4>();
+
+    cudaArray_t cuArray;
+
+    CUDA_CHECK(cudaMallocArray(
+        &cuArray,
+        &channelDesc,
+        w,
+        h
+    ));
+
+    CUDA_CHECK(cudaMemcpy2DToArray(
+        cuArray,
+        0,
+        0,
+        pixels,
+        w * sizeof(float4),
+        w * sizeof(float4),
+        h,
+        cudaMemcpyHostToDevice
+    ));
+
+    cudaResourceDesc resDesc = {};
+    resDesc.resType =
+        cudaResourceTypeArray;
+
+    resDesc.res.array.array =
+        cuArray;
+
+    cudaTextureDesc texDesc = {};
+
+    texDesc.addressMode[0] =
+        cudaAddressModeWrap;
+
+    texDesc.addressMode[1] =
+        cudaAddressModeClamp;
+
+    texDesc.filterMode =
+        cudaFilterModeLinear;
+
+    texDesc.readMode =
+        cudaReadModeElementType;
+
+    texDesc.normalizedCoords = 1;
+
+    cudaTextureObject_t tex = 0;
+
+    CUDA_CHECK(cudaCreateTextureObject(
+        &tex,
+        &resDesc,
+        &texDesc,
+        nullptr
+    ));
+
+    stbi_image_free(pixels);
+
+    return tex;
+}
 
 void initLaunchParams( const MulticamScene& scene ) {
 
@@ -130,6 +201,13 @@ void initLaunchParams( const MulticamScene& scene ) {
                 ) );
 
     params.miss_color   = make_float3( 0.1f );
+
+    if (!scene.m_backgroundHdri.empty()) {
+        params.hdriTexture =
+        loadHDRI(scene.m_backgroundHdri.c_str());
+    } else {
+        params.hdriTexture = 0;
+    }
 
     //CUDA_CHECK( cudaStreamCreate( &stream ) );
     CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_params ), sizeof( globalParameters::LaunchParams ) ) );
