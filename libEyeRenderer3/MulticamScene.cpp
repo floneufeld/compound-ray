@@ -354,6 +354,7 @@ void processGLTFNode(
         sutil::hitscan::populateTriangleMesh(tm, gltf_mesh, model);
         sutil::hitscan::calculateObjectAabb(tm);
         sutil::hitscan::calculateWorldAabbUsingTransformAndObjectAabb(tm);
+        sutil::hitscan::buildBVH(tm);
         scene.m_hitboxMeshes.push_back(tm);
 
         std::cerr << "Processing glTF mesh: '" << gltf_mesh.name << "'\n";

@@ -22,6 +22,20 @@
 namespace sutil {
 namespace hitscan {
 
+struct BVHNode {
+  Aabb bounds;
+
+  int left = -1;
+  int right = -1;
+
+  int firstTriangle = 0;
+  int triangleCount = 0;
+
+  bool isLeaf() const {
+    return left == -1 && right == -1;
+  }
+};
+
 struct Triangle {
   float3 p0, p1, p2;
 };
@@ -32,6 +46,11 @@ struct TriangleMesh{
   Aabb objectAabb;
   Matrix<4,4> transform;
   std::vector<Triangle> triangles;
+
+  // BVH does not reorder the actual triangles but the indices
+  std::vector<int> triangleIndices;
+  // BVH nodes
+  std::vector<BVHNode> bvh;
 
   // Prints this triangle mesh's information
   void print();
@@ -56,6 +75,16 @@ template <typename IndexType>
 void getTriangles(TriangleMesh& tm, const tinygltf::Model& model, const tinygltf::Primitive& primitive);
 template <typename IndexType, typename FloatType>
 void getTrianglesInFloatForm(TriangleMesh& tm, const tinygltf::Model& model, const tinygltf::Primitive& primitive);
+
+void buildBVH(TriangleMesh& tm);
+
+bool raycastBVH(
+    TriangleMesh& tm,
+    float3 rayOrigin,
+    float3 rayDir,
+    float& closestT,
+    float3& hitPoint,
+    float3& hitNormal);
 
 }
 }
