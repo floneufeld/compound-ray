@@ -76,7 +76,7 @@ def split_panorama(img, overlap_deg, blind_deg):
         img         = img[:, left_cut:right_cut]
     
     ncols   = img.shape[1]
-    centre  = ncols / 2.0
+    centre  = int(ncols / 2.0)
 
     if 0 < overlap_deg < 360:
         

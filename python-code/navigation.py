@@ -266,4 +266,165 @@ def search_mono(cur_frame_fray_mean_norm, current_yaw, current_ref, ref_gray_vec
     return target_yaw, current_ref, max_score
 
 
+# two eyes search
+def search_bilateral(gray, current_yaw, current_ref, ref_left_vec, ref_right_vec):
+    
+    # 1st time measure
+    begin_0 = time.perf_counter()
+    
 
+    # choose memories around current_ref or all
+    if config.win:
+        start   = max(0, current_ref - config.look_back)
+        end     = min(len(ref_left_vec), current_ref + config.window + 1)
+    else:
+        start   = 0
+        end     = len(ref_left_vec)
+
+    refs_l = ref_left_vec[start:end]
+    refs_r = ref_right_vec[start:end]
+
+    
+    # offset
+    shift               = matlab_round(gray.shape[1] * config.eyeOffset / 360)
+    query_left_full     = np.roll(gray, -shift, axis=1)
+    query_right_full    = np.roll(gray, shift, axis=1)
+
+
+
+    # array of degrees
+    degrees = np.arange(0, 360, config.deg_step)
+
+    # score calculation arrays
+    left_curves      = []
+    right_curves     = []
+
+
+    timer           = 0.0
+
+    beforeMatrix_1 = time.perf_counter()
+
+    # rotate through degrees
+    for i, angle in enumerate(degrees):
+
+        # apply the angle i
+        shift_new   = matlab_round(gray.shape[1] * angle / 360)
+        rot_left    = np.roll(query_left_full, shift_new, axis=1)
+        rot_right   = np.roll(query_right_full, shift_new, axis=1)
+
+        # split for eye view
+        left_eye,_  = split_panorama(rot_left, config.overlap, config.blind)
+        _,right_eye = split_panorama(rot_right, config.overlap, config.blind)
+
+        # normalize after split
+        left_eye    = normalize_for_correlation(left_eye)
+        right_eye   = normalize_for_correlation(right_eye)
+
+        # flatten
+        left_vec    = np.ravel(left_eye)
+        right_vec   = np.ravel(right_eye)
+
+        # compute scores and measure time
+        get             = time.perf_counter()
+        left_scores     = refs_l @ left_vec
+        right_scores    = refs_r @ right_vec
+        timer           += time.perf_counter() - get
+
+        # store results
+        left_curves.append(left_scores)
+        right_curves.append(right_scores)
+    
+    afterMatrix_2 = time.perf_counter()
+
+    left_curves = np.asarray(left_curves)
+    right_curves = np.asarray(right_curves)
+
+    # raw bilateral familiarity
+    left_raw = left_curves
+    right_raw = right_curves
+
+    # normalize
+    left_norm = normalize_5pct(left_curves, axis=0)
+    right_norm = normalize_5pct(right_curves, axis=0)
+    
+    
+    # find references
+    n_angles = len(degrees)
+    quarter = n_angles // 4
+    front_indices = np.concatenate([np.arange(0, quarter + 1), np.arange(n_angles - quarter, n_angles)])
+    familiarity = np.minimum(left_raw, right_raw)
+    ref_familiarity = np.max(familiarity[front_indices, :], axis=0)
+
+    ref_indices = np.arange(start, end)
+    progress = ref_indices - current_ref
+    back = np.maximum(-progress, 0) * 0.01
+    forw = np.maximum(progress - 5, 0) * 0.005
+    selection_score = (ref_familiarity - back - forw)
+
+    K = min(5, len(selection_score))
+    top_k_local = np.argsort(selection_score)[-K:][::-1]
+
+
+
+
+    # calculate the difference of all angle rotations
+    difference_curves = left_norm - right_norm
+
+    cur_idx = 0
+    e = np.mean(difference_curves[cur_idx, :])
+    steering_angle_deg = np.clip(20 * e, -15.0, 15.0)
+
+    difference = np.mean(difference_curves, axis=1)
+
+    n = len(difference)
+    quarter = n // 4
+    forward = np.concatenate([difference[-quarter:], difference[:quarter]])
+
+    #signal = (np.sum(forward >= 0) - np.sum(forward < 0)) / len(forward)
+    signal = np.mean(forward)
+
+    #steering_angle_deg = signal * 15.0
+    
+    # return 1 of 2: update the global yaw
+    target_yaw = (current_yaw + math.radians(steering_angle_deg))
+
+
+    # return 2 of 2: estimated memory index
+    if config.win:
+        # convert from 0...357 to -180...+180 degrees
+        signed_degrees = np.where(degrees <= 180, degrees, degrees - 360)
+
+        # find rotation
+        steering_idx = np.argmin(np.abs(signed_degrees - steering_angle_deg))
+        steering_search_angle = degrees[steering_idx]
+
+        # select reference
+        familiarity_at_steering = familiarity[steering_idx]
+        candidate_familiarity = familiarity_at_steering[top_k_local]
+        best_candidate_idx = np.argmax(candidate_familiarity)
+        best_ref = start + top_k_local[best_candidate_idx]
+
+        current_ref = max(current_ref, best_ref)
+        
+    else:
+        current_ref = -1
+
+
+
+    # last measure
+    endTime = time.perf_counter()
+
+
+    # DEBUG
+    if config.debug:
+        print("\tdt until Matrix:\t",           round((beforeMatrix_1-begin_0)      *1000, 3),  "ms")
+        print("\tdt MATRIX:\t\t",               round((afterMatrix_2-beforeMatrix_1)*1000, 3),  "ms")
+        print("\tdt after Matrix:\t",           round((endTime-afterMatrix_2)       *1000, 3),  "ms")
+        print("\tdt 1 deg:\t\t",                round(timer/len(degrees)            *1000, 3),  "ms")
+        print("\tdt timer:\t\t",                round(timer                         *1000, 3),  "ms")
+        print("\tsignal:\t\t",                  round(signal, 5))
+        if config.win:
+            print("\tcurrent_ref:\t", current_ref)
+
+    return target_yaw, current_ref
+    

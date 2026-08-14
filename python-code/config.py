@@ -1,8 +1,8 @@
 # general settings
 
 # resize the renderer
-render_width                = 300
-render_height               = 300
+render_width                = 200
+render_height               = 200
 
 # gltf file input
 gltf_path                   = b"/home/user/10M.gltf"
@@ -19,7 +19,7 @@ min_frame_time_nav          = 0.0
 
 # agent height above ground
 ray_height                  = True
-offset_height               = 0.2
+offset_height               = 0.1
 
 # navigate from last to first snapshot
 reverse                     = False
@@ -36,8 +36,8 @@ csv_input                   = True
 
 # csv files input
 read_all_csv_values         = False
-read_from_line              = 300   # from 0 to 73 or from 73 to 576 (line-2)
-read_until_line             = 570
+read_from_line              = 73   # from 0 to 73 or from 73 to 576 (line-2)
+read_until_line             = 576
 line_step                   = 1
 csv_coor_path               = "/home/user/csv/RouteCoordinates0.csv"
 csv_angl_path               = "/home/user/csv/RouteAngles0.csv"
@@ -51,7 +51,7 @@ snapshot_distance           = 0.05
 # navigation settings
 
 # navigation mode
-bilateral                   = False
+bilateral                   = True
 
 # mode 1: fixed step_distance
 # mode 2: dynamic to maintain target_speed
@@ -60,12 +60,12 @@ step_distance_mode          = 1
 step_distance               = 0.02  # mode 1
 target_speed                = 0.35  # mode 2
 
-deg_step                    = 1     # degrees between tested angles
+deg_step                    = 2     # degrees between tested angles
 
 # only compare against window references ahead and look_back references behind
 win                         = True
-window                      = 20
-look_back                   = 0
+window                      = 30
+look_back                   = 10
 
 # frame height to keep of full panorama (ranges from 0 to 1)
 start                       = 0.25  # bottom
