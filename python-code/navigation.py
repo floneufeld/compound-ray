@@ -346,25 +346,6 @@ def search_bilateral(gray, current_yaw, current_ref, ref_left_vec, ref_right_vec
     # normalize
     left_norm = normalize_5pct(left_curves, axis=0)
     right_norm = normalize_5pct(right_curves, axis=0)
-    
-    
-    # find references
-    n_angles = len(degrees)
-    quarter = n_angles // 4
-    front_indices = np.concatenate([np.arange(0, quarter + 1), np.arange(n_angles - quarter, n_angles)])
-    familiarity = np.minimum(left_raw, right_raw)
-    ref_familiarity = np.max(familiarity[front_indices, :], axis=0)
-
-    ref_indices = np.arange(start, end)
-    progress = ref_indices - current_ref
-    back = np.maximum(-progress, 0) * 0.01
-    forw = np.maximum(progress - 5, 0) * 0.005
-    selection_score = (ref_familiarity - back - forw)
-
-    K = min(5, len(selection_score))
-    top_k_local = np.argsort(selection_score)[-K:][::-1]
-
-
 
 
     # calculate the difference of all angle rotations
@@ -390,20 +371,30 @@ def search_bilateral(gray, current_yaw, current_ref, ref_left_vec, ref_right_vec
 
 
     # return 2 of 2: estimated memory index
+    ref_before = current_ref
     if config.win:
         # convert from 0...357 to -180...+180 degrees
         signed_degrees = np.where(degrees <= 180, degrees, degrees - 360)
 
-        # find rotation
+        # find closest rotation
         steering_idx = np.argmin(np.abs(signed_degrees - steering_angle_deg))
-        steering_search_angle = degrees[steering_idx]
 
-        # select reference
-        familiarity_at_steering = familiarity[steering_idx]
-        candidate_familiarity = familiarity_at_steering[top_k_local]
-        best_candidate_idx = np.argmax(candidate_familiarity)
-        best_ref = start + top_k_local[best_candidate_idx]
+        # combined familiarity
+        combined_at_steering = (left_raw[steering_idx] + right_raw[steering_idx]) / 2.0
 
+        # bias
+        ref_indices = np.arange(start, end)
+        progress    = ref_indices - current_ref
+        back        = np.maximum(-progress, 0) * 0.01
+        forw        = np.maximum(progress - 5, 0) * 0.005
+        score       = combined_at_steering - back - forw
+
+        order       = np.argsort(score)[::-1]
+        best_local  = order[0]
+        best_ref    = start + best_local
+        best_score  = score[best_local]
+
+        best_ref    = min(best_ref, current_ref + 1)
         current_ref = max(current_ref, best_ref)
         
     else:
@@ -424,7 +415,9 @@ def search_bilateral(gray, current_yaw, current_ref, ref_left_vec, ref_right_vec
         print("\tdt timer:\t\t",                round(timer                         *1000, 3),  "ms")
         print("\tsignal:\t\t",                  round(signal, 5))
         if config.win:
-            print("\tcurrent_ref:\t", current_ref)
+            print("\tref before:\t", ref_before)
+            print("\tref after:\t",  current_ref)
+            print("\tbest_ref:\t",   best_ref)
 
     return target_yaw, current_ref
     

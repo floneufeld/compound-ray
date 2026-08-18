@@ -65,7 +65,7 @@ deg_step                    = 2     # degrees between tested angles
 # only compare against window references ahead and look_back references behind
 win                         = True
 window                      = 30
-look_back                   = 10
+look_back                   = 5
 
 # frame height to keep of full panorama (ranges from 0 to 1)
 start                       = 0.25  # bottom
